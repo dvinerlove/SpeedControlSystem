@@ -50,7 +50,7 @@ void CreateFile()
 
     using (StreamWriter stream = new FileInfo("D:\\Test1.csv").AppendText())
     {
-        for (int i = 0; i < 50000000; i++)
+        for (int i = 0; i < 5000; i++)
         {
             DateTime dateTime = DateTime.Now;
             dateTime = dateTime.AddDays(-random.Next(0, 90));

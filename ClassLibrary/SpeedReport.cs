@@ -12,5 +12,9 @@ namespace ClassLibrary
         public long DateTime { get; set; }
         public string Number { get; set; }
         public double Speed { get; set; }
+        public override string ToString()
+        {
+            return $"{new DateTime(DateTime).ToShortDateString()} {new DateTime(DateTime).ToShortTimeString()} {Number} {Speed}";
+        }
     }
 }

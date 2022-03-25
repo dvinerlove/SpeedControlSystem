@@ -8,7 +8,7 @@ using Lucene.Net.Util;
 
 Console.WriteLine("Hello, World!");
 
-//IndexFile(@"D:/Test1.csv");
+IndexFile(@"D:/Test1.csv");
 
 //var results = Search(id: 3);
 
@@ -25,7 +25,6 @@ ShowResults("Search by speed ", results);
 Console.ReadLine();
 
 
-
 static void ShowResults(string name, List<SpeedReport> results)
 {
 
@@ -39,9 +38,17 @@ static void ShowResults(string name, List<SpeedReport> results)
 }
 static void IndexFile(string filename)
 {
+    string dirPath = "D:/Index/";
+
     var AppLuceneVersion = Lucene.Net.Util.Version.LUCENE_30;
 
-    var indexLocation = new DirectoryInfo(@"D:/Index/").FullName;
+    if (System.IO.Directory.Exists(dirPath))
+    {
+        System.IO.Directory.CreateDirectory(dirPath);
+    }
+
+    var indexLocation = new DirectoryInfo(dirPath).FullName;
+
     var dir = FSDirectory.Open(indexLocation);
 
     var fileStream = new StreamReader(filename);

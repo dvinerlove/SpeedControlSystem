@@ -9,14 +9,25 @@ namespace SpeedControlSystemWeb.Models
 {
     public static class DataSearcher
     {
-       public static void IndexFile(string filename)
+        public static string FolderPath { get; set; }
+        private static string filePath { get; set; }
+        public static void IndexFile()
         {
             var AppLuceneVersion = Lucene.Net.Util.Version.LUCENE_30;
 
-            var indexLocation = new DirectoryInfo(@"D:/Index/").FullName;
+            var indexLocation = new DirectoryInfo(FolderPath).FullName+@"Index\";
+
+            if (System.IO.Directory.Exists(indexLocation)==false)
+            {
+                System.IO.Directory.CreateDirectory(indexLocation);
+            }
+
+            filePath = new DirectoryInfo(FolderPath).FullName+"Data.csv";
+
+
             var dir = FSDirectory.Open(indexLocation);
 
-            var fileStream = new StreamReader(filename);
+            var fileStream = new StreamReader(filePath);
             string? line = fileStream.ReadLine();
 
 
@@ -31,8 +42,6 @@ namespace SpeedControlSystemWeb.Models
                     var values = line.Split(splitChar);
 
                     Document document = new Document();
-
-                    document.Add(new Field("id", values[0], Field.Store.YES, Field.Index.NOT_ANALYZED, Field.TermVector.NO));
 
                     var dateField = new NumericField("date", Field.Store.YES, true);
                     dateField.OmitNorms = false;
@@ -55,9 +64,9 @@ namespace SpeedControlSystemWeb.Models
             }
         }
 
-       public static List<SpeedReport> Search(int? speed, object? date, object? maxDate)
+        public static List<string> Search(int? speed, object? date, object? maxDate)
         {
-            var indexLocation = @"D:\Index";
+            var indexLocation = FolderPath + @"Index\";
             var dir = FSDirectory.Open(indexLocation);
 
             IndexSearcher searcher = new IndexSearcher(dir);
@@ -90,19 +99,18 @@ namespace SpeedControlSystemWeb.Models
 
             var hits = searcher.Search(query, 10000);
 
-            var results = new List<SpeedReport>();
+            var results = new List<string>();
 
             foreach (var hit in hits.ScoreDocs)
             {
                 var doc = searcher.Doc(hit.Doc);
-
-                results.Add(new SpeedReport
+                var report = new SpeedReport
                 {
-                    Id = int.Parse(doc.Get("id")),
                     DateTime = long.Parse(doc.Get("date")),
                     Number = doc.Get("number"),
                     Speed = double.Parse(doc.Get("speed").Replace(".", ","))
-                });
+                };
+                results.Add(report.ToString());
             }
 
             return results;
