@@ -9,7 +9,7 @@ namespace ClassLibrary
     public enum ResponceState
     {
         Success,
-        Error,
+        ServiceUnavailable,
         Empty,
         AlreadyExists
     }

@@ -25,7 +25,7 @@ namespace ClassLibrary
             }
             SetStateMessage();
         }
-        public ApiResponce(ResponceState state = ResponceState.Error)
+        public ApiResponce(ResponceState state = ResponceState.ServiceUnavailable)
         {
 
             ResponceState = state;
@@ -40,7 +40,7 @@ namespace ClassLibrary
         {
             switch (ResponceState)
             {
-                case ResponceState.Error:
+                case ResponceState.ServiceUnavailable:
                     StateMessage = "Service unavailable at this time";
                     break;
                 case ResponceState.Empty:

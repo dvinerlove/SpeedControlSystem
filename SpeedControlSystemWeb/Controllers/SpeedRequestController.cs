@@ -76,7 +76,7 @@ namespace SpeedControlSystemWeb.Controllers
             }
             else
             {
-                return new ApiResponce();
+                return new ApiResponce( ResponceState.ServiceUnavailable);
             }
         }
     }
