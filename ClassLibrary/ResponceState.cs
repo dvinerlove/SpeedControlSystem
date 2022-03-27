@@ -4,9 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SpeedControlSystem
+namespace ClassLibrary
 {
-    internal class Test
+    public enum ResponceState
     {
+        Success,
+        Error,
+        Empty,
+        AlreadyExists
     }
 }

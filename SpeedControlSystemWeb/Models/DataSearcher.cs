@@ -2,71 +2,118 @@
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
+using System.Diagnostics;
+using System.Text;
 
 namespace SpeedControlSystemWeb.Models
 {
     public static class DataSearcher
     {
         public static string FolderPath { get; set; }
-        private static string filePath { get; set; }
-        public static void IndexFile()
+        public static string Filename { get; set; }
+        static FSDirectory? fSDirectory;
+        static Lucene.Net.Util.Version appLuceneVersion = Lucene.Net.Util.Version.LUCENE_30;
+
+        public static bool AddItem(SpeedReport speedReport)
         {
-            var AppLuceneVersion = Lucene.Net.Util.Version.LUCENE_30;
-
-            var indexLocation = new DirectoryInfo(FolderPath).FullName+@"Index\";
-
-            if (System.IO.Directory.Exists(indexLocation)==false)
+            using (var analyzer = new StandardAnalyzer(appLuceneVersion))
+            using (var writer = new IndexWriter(fSDirectory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED))
             {
-                System.IO.Directory.CreateDirectory(indexLocation);
-            }
 
-            filePath = new DirectoryInfo(FolderPath).FullName+"Data.csv";
-
-
-            var dir = FSDirectory.Open(indexLocation);
-
-            var fileStream = new StreamReader(filePath);
-            string? line = fileStream.ReadLine();
-
-
-            var splitChar = new char[] { ',' };
-
-            using (var analyzer = new StandardAnalyzer(AppLuceneVersion))
-            using (var writer = new IndexWriter(dir, analyzer, IndexWriter.MaxFieldLength.UNLIMITED))
-            {
-                writer.DeleteAll();
-                while ((line = fileStream.ReadLine()) != null)
+                var result = Search(hash: speedReport.Hash);
+                if (result.Count == 0)
                 {
-                    var values = line.Split(splitChar);
-
-                    Document document = new Document();
-
-                    var dateField = new NumericField("date", Field.Store.YES, true);
-                    dateField.OmitNorms = false;
-
-                    dateField.OmitTermFreqAndPositions = false;
-                    dateField.SetLongValue(long.Parse(values[1]));
-                    document.Add(dateField);
-
-                    document.Add(new Field("number", values[2], Field.Store.YES, Field.Index.ANALYZED));
-
-                    var speedField = new NumericField("speed", Field.Store.YES, true);
-                    speedField.OmitNorms = false;
-
-                    speedField.OmitTermFreqAndPositions = false;
-                    speedField.SetDoubleValue(double.Parse(values[3].Replace(".", ",")));
-                    document.Add(speedField);
-
+                    using (StreamWriter stream = new FileInfo(FolderPath+Filename).AppendText())
+                    {
+                        stream.WriteLine($"{speedReport.Hash},{speedReport.DateTime},{speedReport.Number},{speedReport.Speed.ToString().Replace(",", ".")}");
+                    }
+                    Document document = GetDocument(speedReport);
                     writer.AddDocument(document);
+                    writer.Commit();
+                    return true;
+                }
+                else
+                {
+                    return false;
                 }
             }
         }
 
-        public static List<string> Search(int? speed, object? date, object? maxDate)
+        private static Document GetDocument(SpeedReport speedReport)
         {
+            Document document = new Document();
+
+            document.Add(new Field("hash", speedReport.Hash, Field.Store.NO, Field.Index.ANALYZED));
+            document.Add(new Field("hash_exact", speedReport.Hash, Field.Store.YES, Field.Index.NOT_ANALYZED));
+
+            var dateField = new NumericField("date", Field.Store.YES, true);
+            dateField.OmitNorms = false;
+
+            dateField.OmitTermFreqAndPositions = false;
+            dateField.SetLongValue(speedReport.DateTime);
+            document.Add(dateField);
+
+            document.Add(new Field("number", speedReport.Number, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+
+            var speedField = new NumericField("speed", Field.Store.YES, true);
+            speedField.OmitNorms = false;
+
+            speedField.OmitTermFreqAndPositions = false;
+            speedField.SetDoubleValue(speedReport.Speed);
+            document.Add(speedField);
+            return document;
+        }
+
+        public static void IndexFile()
+        {
+
             var indexLocation = FolderPath + @"Index\";
+
+            if (System.IO.Directory.Exists(indexLocation) == false)
+            {
+                System.IO.Directory.CreateDirectory(indexLocation);
+            }
+
+            var filePath = FolderPath + Filename;
+
+            fSDirectory = FSDirectory.Open(indexLocation);
+
+            var splitChar = new char[] { ',' };
+
+            if (IndexReader.IndexExists(fSDirectory))
+            {
+                return;
+            }
+
+            using (var analyzer = new StandardAnalyzer(appLuceneVersion))
+            using (var writer = new IndexWriter(fSDirectory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED))
+            {
+                const Int32 BufferSize = 128;
+                using (var fileStream1 = File.OpenRead(filePath))
+                using (var streamReader = new StreamReader(fileStream1, Encoding.UTF8, true, BufferSize))
+                {
+                    String? line;
+                    while ((line = streamReader.ReadLine()) != null)
+                    {
+                        var values = line.Split(splitChar);
+
+                        Document document = GetDocument(new SpeedReport() { DateTime = long.Parse(values[1]), Number = values[2], Speed = double.Parse(values[3].Replace(".", ",")) });
+                        writer.AddDocument(document);
+                    }
+                    writer.Commit();
+                }
+                return;
+            }
+        }
+
+        public static List<string> Search(double? speed = null, double? speedMax = null, object? date = null, object? dateMax = null, string? hash = null)
+        {
+
+            var analyzer = new StandardAnalyzer(appLuceneVersion);
+                var indexLocation = FolderPath + @"Index\";
             var dir = FSDirectory.Open(indexLocation);
 
             IndexSearcher searcher = new IndexSearcher(dir);
@@ -75,7 +122,7 @@ namespace SpeedControlSystemWeb.Models
 
             DateTime dateFirst;
             DateTime dateSecond;
-            if (date != null && maxDate == null)
+            if (date != null && dateMax == null)
             {
                 dateFirst = DateTime.Parse(date.ToString()!).Date;
                 dateSecond = DateTime.Parse(date.ToString()!).AddDays(1).Date;
@@ -83,10 +130,10 @@ namespace SpeedControlSystemWeb.Models
                 query.Add(nrq, Occur.MUST);
             }
 
-            if (date != null && maxDate != null)
+            if (date != null && dateMax != null)
             {
                 dateFirst = DateTime.Parse(date.ToString()!).Date;
-                dateSecond = DateTime.Parse(maxDate.ToString()!).AddDays(1).Date;
+                dateSecond = DateTime.Parse(dateMax.ToString()!).AddDays(1).Date;
                 var nrq = NumericRangeQuery.NewLongRange("date", dateFirst.Ticks, dateSecond.Ticks, true, true);
                 query.Add(nrq, Occur.MUST);
             }
@@ -95,6 +142,12 @@ namespace SpeedControlSystemWeb.Models
             {
                 var nrq = NumericRangeQuery.NewDoubleRange("speed", speed, null, true, true);
                 query.Add(nrq, Occur.MUST);
+            }
+
+            if (hash != null && string.IsNullOrEmpty(hash) == false)
+            {
+                Term searchTerm = new Term("hash", hash.ToLowerInvariant());
+                query.Add(new BooleanClause(new TermQuery(searchTerm), Occur.MUST));
             }
 
             var hits = searcher.Search(query, 10000);

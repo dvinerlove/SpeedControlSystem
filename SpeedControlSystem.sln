@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32127.271
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedControlSystem", "SpeedControlSystem\SpeedControlSystem.csproj", "{460CED6B-ED32-414C-BD39-5DF6AE75541D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CreateDataFile", "SpeedControlSystem\CreateDataFile.csproj", "{460CED6B-ED32-414C-BD39-5DF6AE75541D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{0BF5F945-A209-4BCE-87CC-EDC1482C686E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RequestTest", "Test\RequestTest.csproj", "{0BF5F945-A209-4BCE-87CC-EDC1482C686E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClassLibrary", "ClassLibrary\ClassLibrary.csproj", "{26CF33D3-D338-4CDD-981F-D9926A536BD5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClassLibrary", "ClassLibrary\ClassLibrary.csproj", "{26CF33D3-D338-4CDD-981F-D9926A536BD5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedControlSystemWeb", "SpeedControlSystemWeb\SpeedControlSystemWeb.csproj", "{B5C5E218-19B5-4A11-A346-B3B72D8623EE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpeedControlSystemWeb", "SpeedControlSystemWeb\SpeedControlSystemWeb.csproj", "{B5C5E218-19B5-4A11-A346-B3B72D8623EE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

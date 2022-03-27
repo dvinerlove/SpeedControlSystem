@@ -8,8 +8,6 @@ namespace SpeedControlSystemWeb.Controllers
     [Route("request")]
     public class SpeedRequestController : ControllerBase
     {
- 
-
         public SpeedRequestController()
         {
         }
@@ -25,31 +23,60 @@ namespace SpeedControlSystemWeb.Controllers
             return dateTimeStart < dateTimeNow && dateTimeEnd > dateTimeNow;
         }
 
-        [HttpGet("speed")]
+        [HttpGet]
         public object GetSpeed()
         {
-            if (CheckTime())
-            {
-                return new Responce(DataSearcher.Search(speed: 400, DateTime.Now.Date.AddDays(-1), null));
-            }
-            else
-            {
-                return new Responce();
-            }
-
+            return "hello";
         }
 
-        [HttpGet("date")]
-        public object GetDate()
-        {
 
-            if (CheckTime())
+        [HttpPost("add")]
+        public object AddNew([FromBody] SpeedReport speedReport)
+        {
+            bool exists = DataSearcher.AddItem(speedReport);
+            if (exists)
             {
-                return DataSearcher.Search(null, DateTime.Now.Date.AddDays(-2), DateTime.Now.Date.AddDays(-1));
+                return new ApiResponce(new List<string>() { speedReport.ToString()  });
             }
             else
             {
-                return "Service unavailable at this time";
+                return new ApiResponce(ResponceState.AlreadyExists);
+            }
+        }
+
+        [HttpPost("speed")]
+        public object PostSpeed([FromBody] ApiRequestSpeed apiRequestSpeed)
+        {
+            return GetResponce(apiRequestSpeed);
+        }
+
+        [HttpPost("date")]
+        public object PostSpeed([FromBody] ApiRequestDate apiRequestDate)
+        {
+            return GetResponce(apiRequestDate);
+        }
+
+        private object GetResponce(ApiRequest apiRequest)
+        {
+            if (CheckTime())
+            {
+                List<string> result = new List<string>();
+                switch (apiRequest.RequestType)
+                {
+                    case RquestType.Date:
+                        ApiRequestDate apiRequestDate = (ApiRequestDate)apiRequest;
+                        result = DataSearcher.Search(date: apiRequestDate.DateMain, dateMax: apiRequestDate.DateSecond);
+                        break;
+                    case RquestType.Speed:
+                        ApiRequestSpeed apiRequestSpeed = (ApiRequestSpeed)apiRequest;
+                        result = DataSearcher.Search(speed: apiRequestSpeed.MinSpeed, date: apiRequestSpeed.DateMain);
+                        break;
+                }
+                return new ApiResponce(result);
+            }
+            else
+            {
+                return new ApiResponce();
             }
         }
     }
